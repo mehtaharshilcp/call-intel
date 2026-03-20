@@ -19,7 +19,9 @@ Always run commands from the **repository root** (`Hackathon/`), not a removed `
 
 ## Production
 
-`vite build` outputs static files without the dev proxies. For a static host you need a small edge proxy that forwards to `https://api.groq.com` with the `Authorization: Bearer <GROQ_API_KEY>` header.
+**Vercel:** set **`GROQ_API_KEY`** in Project → Settings → Environment Variables (not `VITE_*`). The repo includes [`vercel.json`](vercel.json) and [`api/groq-proxy/[...path].ts`](api/groq-proxy/[...path].ts) so `/groq/...` is proxied to `https://api.groq.com/...` with that key — same paths as in dev.
+
+**Other static hosts:** `vite build` has no dev proxy; you need a small server or edge function that forwards to `https://api.groq.com` with `Authorization: Bearer <GROQ_API_KEY>`.
 
 ## Environment
 

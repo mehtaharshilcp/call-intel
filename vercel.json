@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/groq/:path*", "destination": "/api/groq-proxy/:path*" }
+  ],
+  "functions": {
+    "api/groq-proxy/[...path].ts": {
+      "maxDuration": 120
+    }
+  }
+}
