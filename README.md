@@ -13,12 +13,22 @@ cd "/path/to/Hackathon"   # repo root
 cp .env.example .env
 ```
 
-Edit **`.env`** and set **`GROQ_API_KEY`** (from [console.groq.com](https://console.groq.com/keys)).
+Create or edit **`.env`** in the repo root. Example (same as [`.env.example`](.env.example)):
 
-Optional variables (see [`.env.example`](.env.example)):
+```env
+# Groq chat + Whisper-class STT (optional overrides)
+VITE_GROQ_CHAT_MODEL=llama-3.1-8b-instant
+VITE_GROQ_TRANSCRIPTION_MODEL=whisper-large-v3-turbo
 
-- **`VITE_GROQ_CHAT_MODEL`** — chat model id  
-- **`VITE_GROQ_TRANSCRIPTION_MODEL`** — transcription model id  
+# Used by the Vite dev proxy only — never bundled into client JS.
+GROQ_API_KEY=
+```
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GROQ_API_KEY` | **Yes** (for dev proxy) | API key from [Groq Console → API keys](https://console.groq.com/keys). Paste after the `=` with no quotes. |
+| `VITE_GROQ_CHAT_MODEL` | No | Chat completion model id (inlined at build time; default if unset: `llama-3.1-8b-instant`). |
+| `VITE_GROQ_TRANSCRIPTION_MODEL` | No | Audio transcription model id (default if unset: `whisper-large-v3-turbo`). |
 
 Then:
 
@@ -51,10 +61,6 @@ Audio uploads use **multipart/form-data** up to **15MB** (see [`src/lib/groqClie
 ### Optional: `api/` folder
 
 The [`api/`](api/) TypeScript files are **Groq proxy handlers** you can run behind any Node HTTP server or adapter that supports the same request/response shape (they are **not** started by `npm run dev`). For day-to-day development, the Vite proxy is enough.
-
-## Environment
-
-See [`.env.example`](.env.example).
 
 ## Troubleshooting
 
