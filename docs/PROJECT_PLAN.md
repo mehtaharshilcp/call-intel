@@ -2,7 +2,7 @@
 
 **Purpose:** Hackathon / product plan document: scope, architecture, data model, API, UI, phases, risks, and success criteria.
 
-**As implemented (this repo):** Single **React + Vite** app with **IndexedDB (Dexie)** for persistence and **Groq** (via dev proxy) for STT + chat. The original plan below also described **FastAPI + PostgreSQL** and **OpenAI**; those were valid alternatives—the **functional requirements and UX** match this document even where the stack differs.
+**As implemented (this repo):** Single **React + Vite** app with **IndexedDB (Dexie)** for persistence and **Groq** (via dev proxy) for STT + chat. **We use IndexedDB only; no PostgreSQL, Firestore, or any other external database.**
 
 ---
 
