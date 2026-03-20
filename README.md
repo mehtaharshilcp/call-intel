@@ -47,21 +47,6 @@ Open **http://localhost:5173**
 | `npm run preview`  | Serve `dist/` locally          |
 | `npm run lint`     | ESLint                          |
 
-### How API calls work in dev
-
-[`vite.config.ts`](vite.config.ts) maps:
-
-- `/api/transcribe` → `https://api.groq.com/openai/v1/audio/transcriptions`
-- `/api/chat` → `https://api.groq.com/openai/v1/chat/completions`
-
-and injects `Authorization: Bearer <GROQ_API_KEY>` on the proxied request.
-
-Audio uploads use **multipart/form-data** up to **15MB** (see [`src/lib/groqClient.ts`](src/lib/groqClient.ts)). If a host limits request body size, use shorter clips or a smaller bitrate.
-
-### Optional: `api/` folder
-
-The [`api/`](api/) TypeScript files are **Groq proxy handlers** you can run behind any Node HTTP server or adapter that supports the same request/response shape (they are **not** started by `npm run dev`). For day-to-day development, the Vite proxy is enough.
-
 ## Troubleshooting
 
 **`npm run build` → `Error: ENOENT: no such file or directory, uv_cwd`** — Your shell’s current directory may be invalid (e.g. a deleted folder). `cd` to the repo root and run the command again.
