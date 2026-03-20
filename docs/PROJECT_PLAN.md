@@ -62,37 +62,31 @@ Discovery quality (extract agent questions), sentiment over time (segments), ric
 
 ```mermaid
 flowchart LR
-  subgraph client [WebClient]
+  subgraph client [BrowserApp]
     Upload[Upload UI]
     MainDash[Main Dashboard]
     CallDash[Call Dashboard]
+    LocalPipeline[Local Processing Pipeline]
   end
-  subgraph api [Backend API]
-    Ingest[Ingest and Store]
-    Jobs[Job Runner]
+  subgraph data [LocalDataStore]
+    IDB[(IndexedDB Dexie)]
   end
-  subgraph ai [AI Services]
-    STT[SpeechToText]
-    LLM[LLM Analysis]
+  subgraph ai [GroqViaProxy]
+    STT[api/transcribe]
+    LLM[api/chat]
   end
-  subgraph data [Persistence]
-    DB[(PostgreSQL)]
-    FS[File Storage]
-  end
-  Upload --> Ingest
-  Ingest --> FS
-  Ingest --> Jobs
-  Jobs --> STT
-  STT --> Jobs
-  Jobs --> LLM
-  LLM --> DB
-  MainDash --> api
-  CallDash --> api
-  api --> DB
-  api --> FS
+  Upload --> IDB
+  Upload --> LocalPipeline
+  LocalPipeline --> STT
+  LocalPipeline --> LLM
+  STT --> LocalPipeline
+  LLM --> LocalPipeline
+  LocalPipeline --> IDB
+  MainDash --> IDB
+  CallDash --> IDB
 ```
 
-**As implemented:** Client holds data in **IndexedDB**; “API” for AI is **proxied Groq** (`/api/transcribe`, `/api/chat`) from the Vite dev server—no separate ingest service process.
+**As implemented:** The app is browser-first. Upload, processing, and reads happen locally, with **IndexedDB** as the only persistence layer. Network calls are only AI proxy routes (`/api/transcribe`, `/api/chat`) to Groq.
 
 ---
 
