@@ -16,12 +16,12 @@ cp .env.example .env
 Create or edit **`.env`** in the repo root. Example (same as [`.env.example`](.env.example)):
 
 ```env
+# Required for local dev (Vite proxy). Get a key at https://console.groq.com/keys — never commit real keys.
+GROQ_API_KEY=
+
 # Groq chat + Whisper-class STT (optional overrides)
 VITE_GROQ_CHAT_MODEL=llama-3.1-8b-instant
 VITE_GROQ_TRANSCRIPTION_MODEL=whisper-large-v3-turbo
-
-# Used by the Vite dev proxy only — never bundled into client JS.
-GROQ_API_KEY=
 ```
 
 | Variable | Required | Description |
