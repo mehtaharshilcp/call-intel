@@ -20,7 +20,7 @@ Always run commands from the **repository root** (`Hackathon/`), not a removed `
 ## Production (Vercel)
 
 1. Set **`GROQ_API_KEY`** (or **`OPENAI_API_KEY`**) in **Project → Environment Variables** — server-only, not `VITE_*`.
-2. **Large audio (> ~2MB):** Vercel rejects large **multipart** bodies to a function (`FUNCTION_PAYLOAD_TOO_LARGE`). Add **[Vercel Blob](https://vercel.com/docs/storage/vercel-blob)** and **`BLOB_READ_WRITE_TOKEN`** (link the store to the project so the token is available). The app uploads audio to Blob, then transcribes using a small JSON `{ url }` request.
+2. **Audio up to 15MB:** Enforced in the UI/API/Blob token. **Vercel** still rejects large **multipart** requests to a single function (~4.5MB), so in production, files **over ~2MB** use **Blob upload** then transcribe via JSON `{ url }`. Configure **[Vercel Blob](https://vercel.com/docs/storage/vercel-blob)** and **`BLOB_READ_WRITE_TOKEN`**. Large files need enough **function duration** (this repo allows up to **300s** for transcription on supported plans).
 3. Optional: **`VITE_GROQ_CHAT_MODEL`**, **`VITE_GROQ_TRANSCRIPTION_MODEL`** (inlined at build time).
 4. [`vercel.json`](vercel.json) rewrites non-API paths to `index.html` for SPA routing and sets function timeouts.
 
@@ -46,3 +46,5 @@ See [`.env.example`](.env.example).
 **`npm run build` → `Error: ENOENT: no such file or directory, uv_cwd`** — Your shell is still inside the old `frontend/` folder (deleted after the repo was flattened). Open a new terminal or run `cd /path/to/Hackathon` (this repo root), then `npm run build` again.
 
 **Vercel: `NOT_FOUND` on `/api/groq/...`** — Use the repo root as **Root Directory**, redeploy after adding env vars, and ensure `api/groq/**` is in the deployment. A browser **GET** to the transcriptions URL returns **405** once routing works; **POST** + multipart is required for real transcription.
+
+**`FUNCTION_INVOCATION_FAILED`** — Often fixed by using **Node.js** for API routes and **buffering** the request body (this repo does both). Check **Vercel → Logs** for the real stack trace. Long MP3s may also **timeout** on the Hobby limit (~10s execution): use **Pro** or shorter audio so transcription + analysis can finish.

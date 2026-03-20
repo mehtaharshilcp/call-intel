@@ -10,11 +10,13 @@ const chatModel = import.meta.env.VITE_GROQ_CHAT_MODEL || 'llama-3.1-8b-instant'
 const transcriptionModel =
   import.meta.env.VITE_GROQ_TRANSCRIPTION_MODEL || 'whisper-large-v3-turbo'
 
+/** Hard cap for uploads (aligned with Vercel Blob token and Groq proxy validation). */
+export const MAX_AUDIO_BYTES = 15 * 1024 * 1024
+
 /**
  * Vercel serverless rejects large multipart bodies (~4.5 MiB). Above this size in production,
- * upload audio to Vercel Blob first (small token request), then POST JSON `{ url }` to transcribe.
+ * upload to Vercel Blob first, then POST JSON `{ url }` to transcribe.
  */
-/** Stay well under Vercel’s ~4.5MiB serverless body limit (multipart adds overhead). */
 const VERCEL_DIRECT_UPLOAD_MAX_BYTES = 2 * 1024 * 1024
 
 async function transcribeViaBlobThenJson(blob: Blob, filename: string): Promise<{
@@ -28,12 +30,12 @@ async function transcribeViaBlobThenJson(blob: Blob, filename: string): Promise<
     uploaded = await upload(filename || 'audio.webm', blob, {
       access: 'public',
       handleUploadUrl: '/api/blob/upload',
-      multipart: blob.size > 4 * 1024 * 1024,
+      multipart: blob.size > 512 * 1024,
     })
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     throw new Error(
-      `Upload to storage failed (${msg}). For files over ~2MB on Vercel, create a Blob store and set BLOB_READ_WRITE_TOKEN. See README.`
+      `Upload to storage failed (${msg}). On Vercel, add a Blob store and BLOB_READ_WRITE_TOKEN for files over ~2MB (up to ${MAX_AUDIO_BYTES / 1024 / 1024}MB). See README.`
     )
   }
 
@@ -55,6 +57,10 @@ export async function transcribeAudio(blob: Blob, filename: string): Promise<{
   segments?: Array<{ start?: number; end?: number; text?: string }>
   text?: string
 }> {
+  if (blob.size > MAX_AUDIO_BYTES) {
+    throw new Error(`Audio is too large (max ${MAX_AUDIO_BYTES / 1024 / 1024}MB). Trim or compress the file.`)
+  }
+
   const useBlobPath = import.meta.env.PROD && blob.size > VERCEL_DIRECT_UPLOAD_MAX_BYTES
 
   if (useBlobPath) {
