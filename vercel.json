@@ -12,6 +12,9 @@
     },
     "api/groq/openai/v1/chat/completions.ts": {
       "maxDuration": 60
+    },
+    "api/blob/upload.ts": {
+      "maxDuration": 60
     }
   }
 }

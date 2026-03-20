@@ -20,16 +20,19 @@ Always run commands from the **repository root** (`Hackathon/`), not a removed `
 ## Production (Vercel)
 
 1. Set **`GROQ_API_KEY`** (or **`OPENAI_API_KEY`**) in **Project → Environment Variables** — server-only, not `VITE_*`.
-2. Optional: **`VITE_GROQ_CHAT_MODEL`**, **`VITE_GROQ_TRANSCRIPTION_MODEL`** so the client bundle knows which models to request (inlined at build time).
-3. [`vercel.json`](vercel.json) rewrites non-API paths to `index.html` for SPA routing, and extends timeouts for transcription/chat functions.
+2. **Large audio (> ~2MB):** Vercel rejects large **multipart** bodies to a function (`FUNCTION_PAYLOAD_TOO_LARGE`). Add **[Vercel Blob](https://vercel.com/docs/storage/vercel-blob)** and **`BLOB_READ_WRITE_TOKEN`** (link the store to the project so the token is available). The app uploads audio to Blob, then transcribes using a small JSON `{ url }` request.
+3. Optional: **`VITE_GROQ_CHAT_MODEL`**, **`VITE_GROQ_TRANSCRIPTION_MODEL`** (inlined at build time).
+4. [`vercel.json`](vercel.json) rewrites non-API paths to `index.html` for SPA routing and sets function timeouts.
 
 **Folder layout** (API):
 
 ```text
-api/groq/
-  _forward.ts                          # shared Groq proxy (auth + stream body)
-  openai/v1/audio/transcriptions.ts    # POST → Groq /openai/v1/audio/transcriptions
-  openai/v1/chat/completions.ts       # POST → Groq /openai/v1/chat/completions
+api/
+  blob/upload.ts                       # Vercel Blob client-upload tokens (large audio)
+  groq/
+    _forward.ts
+    openai/v1/audio/transcriptions.ts  # multipart proxy OR JSON { url } after Blob
+    openai/v1/chat/completions.ts
 ```
 
 **Other static hosts:** you must replicate the same `/api/groq/...` forwarding (or change `BASE` in [`src/lib/groqClient.ts`](src/lib/groqClient.ts)) with a server or edge function; `vite build` alone is not enough.
