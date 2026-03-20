@@ -2,13 +2,13 @@
 
 Single **React + Vite** app. Call metadata, transcripts, analysis, and **audio** are stored in **[IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)** (via [Dexie](https://dexie.org/)). No separate database or API server.
 
-**OpenAI** or **[Groq](https://console.groq.com/)** (both OpenAI-compatible: Whisper-class STT + chat) are reached through **Vite dev proxies** so the browser is not blocked by CORS and API keys are **not** bundled into client JS. Groq’s **free tier** is enough for local development and demos when you set `VITE_USE_GROQ=1` and `GROQ_API_KEY`.
+**[Groq](https://console.groq.com/)** (Whisper-class STT + chat via an OpenAI-compatible HTTP API) is reached through a **Vite dev proxy** so the browser is not blocked by CORS and **`GROQ_API_KEY` is not** bundled into client JS. Groq’s **free tier** is enough for local development and demos.
 
 ## Run
 
 ```bash
 cp .env.example .env
-# Either: set OPENAI_API_KEY, or use Groq: VITE_USE_GROQ=1 and GROQ_API_KEY (free tier at console.groq.com)
+# Set GROQ_API_KEY (from console.groq.com)
 npm install
 npm run dev
 ```
@@ -19,7 +19,7 @@ Always run commands from the **repository root** (`Hackathon/`), not a removed `
 
 ## Production
 
-`vite build` outputs static files without the dev proxies. For a static host you need a small edge proxy that forwards to `https://api.openai.com` or `https://api.groq.com` with the right `Authorization: Bearer …` header.
+`vite build` outputs static files without the dev proxies. For a static host you need a small edge proxy that forwards to `https://api.groq.com` with the `Authorization: Bearer <GROQ_API_KEY>` header.
 
 ## Environment
 

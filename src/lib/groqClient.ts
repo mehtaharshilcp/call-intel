@@ -1,16 +1,12 @@
 /**
- * Calls OpenAI or Groq through Vite dev proxies (`/openai` or `/groq`) so the browser
- * avoids CORS and the API key stays on the dev server (see vite.config.ts).
- * Set VITE_USE_GROQ=1 and GROQ_API_KEY to use Groq’s free tier (OpenAI-compatible API).
+ * Groq’s OpenAI-compatible API via Vite dev proxy `/groq` so the browser avoids CORS
+ * and `GROQ_API_KEY` stays on the dev server (see vite.config.ts).
  */
-const useGroq =
-  import.meta.env.VITE_USE_GROQ === '1' || import.meta.env.VITE_USE_GROQ === 'true'
+const BASE = '/groq/openai/v1'
 
-const BASE = useGroq ? '/groq/openai/v1' : '/openai/v1'
-
-const chatModel = useGroq
-  ? import.meta.env.VITE_GROQ_CHAT_MODEL || 'llama-3.1-8b-instant'
-  : import.meta.env.VITE_OPENAI_CHAT_MODEL || 'gpt-4o-mini'
+const chatModel = import.meta.env.VITE_GROQ_CHAT_MODEL || 'llama-3.1-8b-instant'
+const transcriptionModel =
+  import.meta.env.VITE_GROQ_TRANSCRIPTION_MODEL || 'whisper-large-v3-turbo'
 
 export async function transcribeAudio(blob: Blob, filename: string): Promise<{
   duration?: number
@@ -19,12 +15,7 @@ export async function transcribeAudio(blob: Blob, filename: string): Promise<{
 }> {
   const fd = new FormData()
   fd.append('file', blob, filename || 'audio.webm')
-  fd.append(
-    'model',
-    useGroq
-      ? import.meta.env.VITE_GROQ_TRANSCRIPTION_MODEL || 'whisper-large-v3-turbo'
-      : import.meta.env.VITE_OPENAI_TRANSCRIPTION_MODEL || 'whisper-1'
-  )
+  fd.append('model', transcriptionModel)
   fd.append('response_format', 'verbose_json')
   fd.append('timestamp_granularities[]', 'segment')
 
@@ -35,9 +26,8 @@ export async function transcribeAudio(blob: Blob, filename: string): Promise<{
 
 export type ChatJsonOptions = {
   /**
-   * When true (default), uses `response_format: json_object`. Some providers (e.g. Groq)
-   * reject the whole request if the model returns structurally invalid JSON; set false for
-   * long structured outputs and parse JSON from the text instead.
+   * When true (default), uses `response_format: json_object`. Groq may reject the request
+   * if the model returns structurally invalid JSON; set false for long structured outputs.
    */
   jsonObject?: boolean
 }

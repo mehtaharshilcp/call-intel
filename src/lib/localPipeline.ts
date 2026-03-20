@@ -1,4 +1,4 @@
-import { chatJson, chatModel, transcribeAudio } from './localOpenai'
+import { chatJson, chatModel, transcribeAudio } from './groqClient'
 import { idb, type SegmentRecord } from './db'
 import { notifyIndexedDbUpdate } from './notifyStorage'
 import { topicsForPrompt } from './questionnaireData'
