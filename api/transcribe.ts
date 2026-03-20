@@ -1,118 +1,5 @@
 import { forwardToGroq } from './_forward'
 
-const GROQ_TRANSCRIBE_URL = 'https://api.groq.com/openai/v1/audio/transcriptions'
-
-const MAX_AUDIO_BYTES = 15 * 1024 * 1024
-
-export const config = {
-  runtime: 'nodejs',
-  maxDuration: 300,
-}
-
-function apiKey(): string | undefined {
-  return process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY
-}
-
-function isAllowedBlobUrl(url: string): boolean {
-  try {
-    const u = new URL(url)
-    return (
-      u.protocol === 'https:' &&
-      (u.hostname.endsWith('.blob.vercel-storage.com') ||
-        u.hostname.endsWith('.public.blob.vercel-storage.com'))
-    )
-  } catch {
-    return false
-  }
-}
-
-async function transcribeFromBlobRef(request: Request): Promise<Response> {
-  const key = apiKey()
-  if (!key) {
-    console.error('[transcribe] missing API key')
-    return new Response(JSON.stringify({ error: 'Server misconfigured: API key not set' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
-
-  type Body = { url?: string; filename?: string; model?: string }
-  let raw: Body
-  try {
-    raw = (await request.json()) as Body
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
-
-  const refUrl = raw.url
-  if (!refUrl || !isAllowedBlobUrl(refUrl)) {
-    console.warn('[transcribe] rejected blob url')
-    return new Response(JSON.stringify({ error: 'Invalid or disallowed audio url' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
-
-  try {
-    const audioRes = await fetch(refUrl)
-    if (!audioRes.ok) {
-      console.error('[transcribe] fetch blob failed', audioRes.status)
-      return new Response(JSON.stringify({ error: 'Could not read audio from storage' }), {
-        status: 502,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
-
-    const buf = await audioRes.arrayBuffer()
-    if (buf.byteLength > MAX_AUDIO_BYTES) {
-      console.warn('[transcribe] audio over limit', buf.byteLength)
-      return new Response(
-        JSON.stringify({ error: `Audio exceeds ${MAX_AUDIO_BYTES / 1024 / 1024}MB limit` }),
-        { status: 413, headers: { 'Content-Type': 'application/json' } }
-      )
-    }
-
-    const filename = raw.filename || 'audio.webm'
-    const model = raw.model || 'whisper-large-v3-turbo'
-
-    const form = new FormData()
-    form.append('file', new Blob([buf]), filename)
-    form.append('model', model)
-    form.append('response_format', 'verbose_json')
-    form.append('timestamp_granularities[]', 'segment')
-
-    console.log('[transcribe] from blob', refUrl.slice(0, 72), 'bytes', buf.byteLength)
-
-    const groqRes = await fetch(GROQ_TRANSCRIBE_URL, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${key}` },
-      body: form,
-    })
-
-    const text = await groqRes.text()
-    if (!groqRes.ok) {
-      console.error('[transcribe] groq error', groqRes.status, text.slice(0, 600))
-    }
-
-    return new Response(text, {
-      status: groqRes.status,
-      statusText: groqRes.statusText,
-      headers: {
-        'Content-Type': groqRes.headers.get('content-type') || 'application/json',
-      },
-    })
-  } catch (e) {
-    console.error('[transcribe] blob path failed', e)
-    return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : 'Transcription failed' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    )
-  }
-}
-
 export default async function handler(request: Request): Promise<Response> {
   try {
     if (request.method !== 'POST') {
@@ -124,7 +11,13 @@ export default async function handler(request: Request): Promise<Response> {
 
     const ct = request.headers.get('content-type') || ''
     if (ct.includes('application/json')) {
-      return transcribeFromBlobRef(request)
+      return new Response(
+        JSON.stringify({
+          error:
+            'Transcription expects multipart/form-data with an audio file. JSON body uploads are not supported.',
+        }),
+        { status: 415, headers: { 'Content-Type': 'application/json' } }
+      )
     }
 
     return forwardToGroq(request, '/openai/v1/audio/transcriptions')

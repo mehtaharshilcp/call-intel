@@ -5,7 +5,7 @@ function apiKey(): string | undefined {
 }
 
 /**
- * Proxy to Groq. Buffers request + response bodies (streams often break Vercel Node).
+ * Proxy to Groq. Buffers request + response bodies for environments that mishandle streams.
  */
 export async function forwardToGroq(request: Request, upstreamPath: string): Promise<Response> {
   try {
@@ -60,7 +60,7 @@ export async function forwardToGroq(request: Request, upstreamPath: string): Pro
     return new Response(
       JSON.stringify({
         error: e instanceof Error ? e.message : 'Proxy failed',
-        detail: 'Check Vercel function logs',
+        detail: 'Check server logs',
       }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )

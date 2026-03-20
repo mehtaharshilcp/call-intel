@@ -1,10 +1,5 @@
 import { forwardToGroq } from './_forward'
 
-export const config = {
-  runtime: 'nodejs',
-  maxDuration: 120,
-}
-
 export default async function handler(request: Request): Promise<Response> {
   try {
     if (request.method !== 'POST') {
