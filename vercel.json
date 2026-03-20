@@ -7,13 +7,13 @@
     }
   ],
   "functions": {
-    "api/groq/openai/v1/audio/transcriptions.ts": {
+    "api/transcribe.ts": {
       "maxDuration": 300
     },
-    "api/groq/openai/v1/chat/completions.ts": {
-      "maxDuration": 60
+    "api/chat.ts": {
+      "maxDuration": 120
     },
-    "api/blob/upload.ts": {
+    "api/blob-upload.ts": {
       "maxDuration": 180
     }
   }

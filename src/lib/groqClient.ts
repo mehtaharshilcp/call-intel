@@ -1,10 +1,11 @@
 /**
  * Groq (OpenAI-compatible) from the browser:
- * - Dev: Vite proxies `/api/groq` → `api.groq.com` (see `vite.config.ts`).
- * - Prod (Vercel): `/api/groq/openai/v1/*` is implemented by serverless routes under `api/groq/`.
+ * - Dev: Vite proxies `/api/transcribe` and `/api/chat` → `api.groq.com` (see `vite.config.ts`).
+ * - Prod: flat serverless routes `api/transcribe.ts`, `api/chat.ts`, `api/blob-upload.ts`.
  * Never put the API key in the client; it lives in `GROQ_API_KEY` on the server only.
  */
-const BASE = '/api/groq/openai/v1'
+const TRANSCRIBE_URL = '/api/transcribe'
+const CHAT_URL = '/api/chat'
 
 const chatModel = import.meta.env.VITE_GROQ_CHAT_MODEL || 'llama-3.1-8b-instant'
 const transcriptionModel =
@@ -29,7 +30,7 @@ async function transcribeViaBlobThenJson(blob: Blob, filename: string): Promise<
   try {
     uploaded = await upload(filename || 'audio.webm', blob, {
       access: 'public',
-      handleUploadUrl: '/api/blob/upload',
+      handleUploadUrl: '/api/blob-upload',
       multipart: blob.size > 512 * 1024,
     })
   } catch (e) {
@@ -39,7 +40,7 @@ async function transcribeViaBlobThenJson(blob: Blob, filename: string): Promise<
     )
   }
 
-  const res = await fetch(`${BASE}/audio/transcriptions`, {
+  const res = await fetch(TRANSCRIBE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -73,7 +74,7 @@ export async function transcribeAudio(blob: Blob, filename: string): Promise<{
   fd.append('response_format', 'verbose_json')
   fd.append('timestamp_granularities[]', 'segment')
 
-  const res = await fetch(`${BASE}/audio/transcriptions`, { method: 'POST', body: fd })
+  const res = await fetch(TRANSCRIBE_URL, { method: 'POST', body: fd })
   if (!res.ok) throw new Error((await res.text()) || `Transcription ${res.status}`)
   return res.json()
 }
@@ -91,7 +92,7 @@ export async function chatJson(
   options: ChatJsonOptions = {}
 ): Promise<string> {
   const jsonObject = options.jsonObject !== false
-  const res = await fetch(`${BASE}/chat/completions`, {
+  const res = await fetch(CHAT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

@@ -1,7 +1,6 @@
 import { handleUpload } from '@vercel/blob/client'
 import type { HandleUploadBody } from '@vercel/blob/client'
 
-/** Must match client `MAX_AUDIO_BYTES` in `src/lib/groqClient.ts`. */
 const MAX_AUDIO_BYTES = 15 * 1024 * 1024
 
 export const config = {
@@ -29,7 +28,7 @@ export default async function handler(request: Request): Promise<Response> {
     }
 
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      console.error('[blob/upload] BLOB_READ_WRITE_TOKEN is not set')
+      console.error('[blob-upload] BLOB_READ_WRITE_TOKEN is not set')
       return new Response(
         JSON.stringify({
           error:
@@ -58,13 +57,15 @@ export default async function handler(request: Request): Promise<Response> {
         maximumSizeInBytes: MAX_AUDIO_BYTES,
       }),
     })
-    return Response.json(result)
+
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
   } catch (e) {
-    console.error('[blob/upload]', e)
+    console.error('[blob-upload]', e)
     return new Response(
-      JSON.stringify({
-        error: e instanceof Error ? e.message : 'Blob token failed',
-      }),
+      JSON.stringify({ error: e instanceof Error ? e.message : 'Blob token failed' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     )
   }

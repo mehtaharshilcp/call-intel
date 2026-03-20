@@ -5,8 +5,7 @@ function apiKey(): string | undefined {
 }
 
 /**
- * Proxy a browser request to Groq’s OpenAI-compatible API.
- * Buffers the body — streaming `request.body` with `duplex: 'half'` often crashes Vercel Node serverless.
+ * Proxy to Groq. Buffers request + response bodies (streams often break Vercel Node).
  */
 export async function forwardToGroq(request: Request, upstreamPath: string): Promise<Response> {
   try {
@@ -43,18 +42,18 @@ export async function forwardToGroq(request: Request, upstreamPath: string): Pro
       body: body && body.byteLength > 0 ? body : undefined,
     })
 
+    const outBody = await upstream.arrayBuffer()
+    const outType = upstream.headers.get('content-type') || 'application/json'
+
     if (!upstream.ok) {
-      const snippet = await upstream.clone().text().catch(() => '')
-      console.error('[groq-proxy] upstream error', upstream.status, snippet.slice(0, 800))
+      const snippet = new TextDecoder().decode(outBody.slice(0, 800))
+      console.error('[groq-proxy] upstream error', upstream.status, snippet)
     }
 
-    const out = new Headers(upstream.headers)
-    out.delete('transfer-encoding')
-
-    return new Response(upstream.body, {
+    return new Response(outBody, {
       status: upstream.status,
       statusText: upstream.statusText,
-      headers: out,
+      headers: { 'Content-Type': outType },
     })
   } catch (e) {
     console.error('[groq-proxy] unhandled', e)

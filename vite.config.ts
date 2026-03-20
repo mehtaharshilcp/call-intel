@@ -9,15 +9,23 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       proxy: {
-        '/api/groq': {
+        '/api/transcribe': {
           target: 'https://api.groq.com',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/groq/, ''),
+          rewrite: () => '/openai/v1/audio/transcriptions',
           configure: (proxy) => {
             proxy.on('proxyReq', (proxyReq) => {
-              if (groqKey) {
-                proxyReq.setHeader('Authorization', `Bearer ${groqKey}`)
-              }
+              if (groqKey) proxyReq.setHeader('Authorization', `Bearer ${groqKey}`)
+            })
+          },
+        },
+        '/api/chat': {
+          target: 'https://api.groq.com',
+          changeOrigin: true,
+          rewrite: () => '/openai/v1/chat/completions',
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              if (groqKey) proxyReq.setHeader('Authorization', `Bearer ${groqKey}`)
             })
           },
         },

@@ -2,7 +2,7 @@
 
 Single **React + Vite** app. Call metadata, transcripts, analysis, and **audio** are stored in **[IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)** (via [Dexie](https://dexie.org/)). No separate database or API server.
 
-**[Groq](https://console.groq.com/)** (Whisper-class STT + chat via an OpenAI-compatible HTTP API) is called from the browser as **`/api/groq/openai/v1/...`**. In dev, **Vite proxies** that path to Groq and injects the key; on **Vercel**, **serverless routes** under `api/groq/` forward the request with **`GROQ_API_KEY`** (never exposed to the client). Groq’s **free tier** is enough for demos.
+**[Groq](https://console.groq.com/)** (Whisper-class STT + chat) is called from the browser via **`/api/transcribe`**, **`/api/chat`**, and (for large files) **`/api/blob-upload`**. In dev, **Vite proxies** the first two to `api.groq.com`; on **Vercel**, flat files under **`api/`** forward with **`GROQ_API_KEY`** (never in the client).
 
 ## Run
 
@@ -28,14 +28,13 @@ Always run commands from the **repository root** (`Hackathon/`), not a removed `
 
 ```text
 api/
-  blob/upload.ts                       # Vercel Blob client-upload tokens (large audio)
-  groq/
-    _forward.ts
-    openai/v1/audio/transcriptions.ts  # multipart proxy OR JSON { url } after Blob
-    openai/v1/chat/completions.ts
+  _forward.ts      # shared Groq proxy (buffers request + response)
+  transcribe.ts    # POST → Groq /openai/v1/audio/transcriptions (multipart or JSON { url })
+  chat.ts          # POST → Groq /openai/v1/chat/completions
+  blob-upload.ts   # Vercel Blob client-upload tokens (large audio on Vercel)
 ```
 
-**Other static hosts:** you must replicate the same `/api/groq/...` forwarding (or change `BASE` in [`src/lib/groqClient.ts`](src/lib/groqClient.ts)) with a server or edge function; `vite build` alone is not enough.
+**Other static hosts:** replicate those paths or change URLs in [`src/lib/groqClient.ts`](src/lib/groqClient.ts).
 
 ## Environment
 
@@ -45,6 +44,6 @@ See [`.env.example`](.env.example).
 
 **`npm run build` → `Error: ENOENT: no such file or directory, uv_cwd`** — Your shell is still inside the old `frontend/` folder (deleted after the repo was flattened). Open a new terminal or run `cd /path/to/Hackathon` (this repo root), then `npm run build` again.
 
-**Vercel: `NOT_FOUND` on `/api/groq/...`** — Use the repo root as **Root Directory**, redeploy after adding env vars, and ensure `api/groq/**` is in the deployment. A browser **GET** to the transcriptions URL returns **405** once routing works; **POST** + multipart is required for real transcription.
+**Vercel: `NOT_FOUND` on `/api/transcribe` etc.** — Repo root = **Root Directory**; commit must include `api/*.ts`. **GET** to transcribe returns **405**; the app uses **POST**.
 
-**`FUNCTION_INVOCATION_FAILED`** — Often fixed by using **Node.js** for API routes and **buffering** the request body (this repo does both). Check **Vercel → Logs** for the real stack trace. Long MP3s may also **timeout** on the Hobby limit (~10s execution): use **Pro** or shorter audio so transcription + analysis can finish.
+**`FUNCTION_INVOCATION_FAILED`** — See **Logs**. This project uses **Node** `runtime`, **flat** `api/*.ts` routes (deep nesting was unreliable), and **buffers** Groq responses. Long MP3s may **timeout** on Hobby; use a plan with longer **maxDuration** or shorter clips.
