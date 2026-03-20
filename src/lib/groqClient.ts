@@ -1,8 +1,10 @@
 /**
- * Groq’s OpenAI-compatible API via Vite dev proxy `/groq` so the browser avoids CORS
- * and `GROQ_API_KEY` stays on the dev server (see vite.config.ts).
+ * Groq (OpenAI-compatible) from the browser:
+ * - Dev: Vite proxies `/api/groq` → `api.groq.com` (see `vite.config.ts`).
+ * - Prod (Vercel): `/api/groq/openai/v1/*` is implemented by serverless routes under `api/groq/`.
+ * Never put the API key in the client; it lives in `GROQ_API_KEY` on the server only.
  */
-const BASE = '/groq/openai/v1'
+const BASE = '/api/groq/openai/v1'
 
 const chatModel = import.meta.env.VITE_GROQ_CHAT_MODEL || 'llama-3.1-8b-instant'
 const transcriptionModel =

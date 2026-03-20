@@ -2,7 +2,7 @@
 
 Single **React + Vite** app. Call metadata, transcripts, analysis, and **audio** are stored in **[IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API)** (via [Dexie](https://dexie.org/)). No separate database or API server.
 
-**[Groq](https://console.groq.com/)** (Whisper-class STT + chat via an OpenAI-compatible HTTP API) is reached through a **Vite dev proxy** so the browser is not blocked by CORS and **`GROQ_API_KEY` is not** bundled into client JS. Groq’s **free tier** is enough for local development and demos.
+**[Groq](https://console.groq.com/)** (Whisper-class STT + chat via an OpenAI-compatible HTTP API) is called from the browser as **`/api/groq/openai/v1/...`**. In dev, **Vite proxies** that path to Groq and injects the key; on **Vercel**, **serverless routes** under `api/groq/` forward the request with **`GROQ_API_KEY`** (never exposed to the client). Groq’s **free tier** is enough for demos.
 
 ## Run
 
@@ -17,11 +17,22 @@ Open http://localhost:5173
 
 Always run commands from the **repository root** (`Hackathon/`), not a removed `frontend/` path.
 
-## Production
+## Production (Vercel)
 
-**Vercel:** set **`GROQ_API_KEY`** in Project → Settings → Environment Variables (not `VITE_*`). Root [`middleware.ts`](middleware.ts) proxies `/groq/...` → `https://api.groq.com/...` with that key (plain Vite builds do not run `vite.config.ts` proxies). [`vercel.json`](vercel.json) adds the usual SPA fallback so client routes work on refresh.
+1. Set **`GROQ_API_KEY`** (or **`OPENAI_API_KEY`**) in **Project → Environment Variables** — server-only, not `VITE_*`.
+2. Optional: **`VITE_GROQ_CHAT_MODEL`**, **`VITE_GROQ_TRANSCRIPTION_MODEL`** so the client bundle knows which models to request (inlined at build time).
+3. [`vercel.json`](vercel.json) rewrites non-API paths to `index.html` for SPA routing, and extends timeouts for transcription/chat functions.
 
-**Other static hosts:** `vite build` has no dev proxy; you need a small server or edge function that forwards to `https://api.groq.com` with `Authorization: Bearer <GROQ_API_KEY>`.
+**Folder layout** (API):
+
+```text
+api/groq/
+  _forward.ts                          # shared Groq proxy (auth + stream body)
+  openai/v1/audio/transcriptions.ts    # POST → Groq /openai/v1/audio/transcriptions
+  openai/v1/chat/completions.ts       # POST → Groq /openai/v1/chat/completions
+```
+
+**Other static hosts:** you must replicate the same `/api/groq/...` forwarding (or change `BASE` in [`src/lib/groqClient.ts`](src/lib/groqClient.ts)) with a server or edge function; `vite build` alone is not enough.
 
 ## Environment
 
@@ -31,4 +42,4 @@ See [`.env.example`](.env.example).
 
 **`npm run build` → `Error: ENOENT: no such file or directory, uv_cwd`** — Your shell is still inside the old `frontend/` folder (deleted after the repo was flattened). Open a new terminal or run `cd /path/to/Hackathon` (this repo root), then `npm run build` again.
 
-**Vercel: `NOT_FOUND` on `/groq/...`** — Deploy the latest commit (root `middleware.ts` + `vercel.json`). In the Vercel project, **Root Directory** must be the repo root (same folder as `middleware.ts`). Set **`GROQ_API_KEY`** in Environment Variables. Opening the transcriptions URL in the browser uses **GET**; Groq expects **POST** with multipart audio — a **405** from Groq means the proxy is working; **NOT_FOUND** means routing/middleware did not run.
+**Vercel: `NOT_FOUND` on `/api/groq/...`** — Use the repo root as **Root Directory**, redeploy after adding env vars, and ensure `api/groq/**` is in the deployment. A browser **GET** to the transcriptions URL returns **405** once routing works; **POST** + multipart is required for real transcription.

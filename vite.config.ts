@@ -9,10 +9,10 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       proxy: {
-        '/groq': {
+        '/api/groq': {
           target: 'https://api.groq.com',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/groq/, ''),
+          rewrite: (path) => path.replace(/^\/api\/groq/, ''),
           configure: (proxy) => {
             proxy.on('proxyReq', (proxyReq) => {
               if (groqKey) {
