@@ -1,10 +1,9 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/groq/:path*", "destination": "/api/groq-proxy/:path*" }
-  ],
-  "functions": {
-    "api/groq-proxy/[...path].ts": {
-      "maxDuration": 120
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  }
+  ]
 }

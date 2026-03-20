@@ -19,7 +19,7 @@ Always run commands from the **repository root** (`Hackathon/`), not a removed `
 
 ## Production
 
-**Vercel:** set **`GROQ_API_KEY`** in Project → Settings → Environment Variables (not `VITE_*`). The repo includes [`vercel.json`](vercel.json) and [`api/groq-proxy/[...path].ts`](api/groq-proxy/[...path].ts) so `/groq/...` is proxied to `https://api.groq.com/...` with that key — same paths as in dev.
+**Vercel:** set **`GROQ_API_KEY`** in Project → Settings → Environment Variables (not `VITE_*`). Root [`middleware.ts`](middleware.ts) proxies `/groq/...` → `https://api.groq.com/...` with that key (plain Vite builds do not run `vite.config.ts` proxies). [`vercel.json`](vercel.json) adds the usual SPA fallback so client routes work on refresh.
 
 **Other static hosts:** `vite build` has no dev proxy; you need a small server or edge function that forwards to `https://api.groq.com` with `Authorization: Bearer <GROQ_API_KEY>`.
 
@@ -30,3 +30,5 @@ See [`.env.example`](.env.example).
 ## Troubleshooting
 
 **`npm run build` → `Error: ENOENT: no such file or directory, uv_cwd`** — Your shell is still inside the old `frontend/` folder (deleted after the repo was flattened). Open a new terminal or run `cd /path/to/Hackathon` (this repo root), then `npm run build` again.
+
+**Vercel: `NOT_FOUND` on `/groq/...`** — Deploy the latest commit (root `middleware.ts` + `vercel.json`). In the Vercel project, **Root Directory** must be the repo root (same folder as `middleware.ts`). Set **`GROQ_API_KEY`** in Environment Variables. Opening the transcriptions URL in the browser uses **GET**; Groq expects **POST** with multipart audio — a **405** from Groq means the proxy is working; **NOT_FOUND** means routing/middleware did not run.
