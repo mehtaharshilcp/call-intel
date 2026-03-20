@@ -47,6 +47,24 @@ Open **http://localhost:5173**
 | `npm run preview`  | Serve `dist/` locally          |
 | `npm run lint`     | ESLint                          |
 
+## Project plan & prompt log (PDF / Word)
+
+**Project plan** — scope, architecture, data model, API, phases, risks, success criteria:
+
+| File | Use |
+|------|-----|
+| [`docs/PROJECT_PLAN.md`](docs/PROJECT_PLAN.md) | Full plan (Mermaid diagram renders in GitHub / VS Code) |
+| [`docs/PROJECT_PLAN.html`](docs/PROJECT_PLAN.html) | Open in browser → **Print → Save as PDF** |
+
+**Prompt log** — exact LLM prompts and STT parameters:
+
+| File | Use |
+|------|-----|
+| [`docs/PROMPT_LOG.md`](docs/PROMPT_LOG.md) | Source in Git |
+| [`docs/PROMPT_LOG.html`](docs/PROMPT_LOG.html) | Print → PDF |
+
+**Word:** Open any `.md` in Microsoft Word and save as `.docx`, or run `pandoc docs/PROJECT_PLAN.md -o docs/PROJECT_PLAN.docx` (and similarly for `PROMPT_LOG.md`) if [Pandoc](https://pandoc.org/) is installed.
+
 ## Troubleshooting
 
 **`npm run build` → `Error: ENOENT: no such file or directory, uv_cwd`** — Your shell’s current directory may be invalid (e.g. a deleted folder). `cd` to the repo root and run the command again.

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project Plan — CP Prompt-X Call Intelligence</title>
+  <style>
+    body { font-family: Georgia, 'Times New Roman', serif; line-height: 1.45; color: #111; max-width: 760px; margin: 2rem auto; padding: 0 1.5rem; }
+    h1 { font-size: 1.55rem; border-bottom: 2px solid #ccc; padding-bottom: 0.35rem; }
+    h2 { font-size: 1.15rem; margin-top: 1.6rem; }
+    h3 { font-size: 1.02rem; margin-top: 1.1rem; }
+    table { border-collapse: collapse; width: 100%; font-size: 0.88rem; margin: 0.6rem 0; }
+    th, td { border: 1px solid #ccc; padding: 0.35rem 0.45rem; text-align: left; vertical-align: top; }
+    th { background: #f5f5f5; }
+    pre { font-family: ui-monospace, Consolas, monospace; font-size: 0.78rem; background: #f8f8f8; border: 1px solid #e0e0e0; padding: 0.65rem 0.85rem; overflow-x: auto; white-space: pre-wrap; }
+    .muted { color: #444; font-size: 0.92rem; }
+    ul { padding-left: 1.25rem; }
+    @media print { body { margin: 0; max-width: none; } h2 { page-break-after: avoid; } }
+  </style>
+</head>
+<body>
+  <p class="muted"><strong>CP Prompt-X — Call Intelligence</strong> · Project plan · Print: Ctrl/Cmd+P → Save as PDF</p>
+  <h1>Project Plan</h1>
+  <p class="muted">Full detail and Mermaid diagram: <code>docs/PROJECT_PLAN.md</code>. Prompts: <code>docs/PROMPT_LOG.md</code>.</p>
+
+  <h2>1. Requirements</h2>
+  <p><strong>Pipeline:</strong> Upload → transcribe → speaker / talk-time → LLM analysis → storage → dashboards.</p>
+  <p><strong>Main dashboard:</strong> Total calls, sentiment split, avg score (0–10), avg duration, top keywords, total action items.</p>
+  <p><strong>Per-call:</strong> Summary, sentiment, synced transcript + audio, talk-time %, overall score, five 1–10 dimensions, questionnaire coverage, keywords, action items, positive/negative observations.</p>
+
+  <h2>2. Logical data model</h2>
+  <ul>
+    <li><strong>Call</strong> — id, filename, duration, status, errors, timestamps</li>
+    <li><strong>TranscriptSegment</strong> — times, speaker (agent/customer/unknown), text</li>
+    <li><strong>CallAnalysis</strong> — sentiment, scores, summary, questionnaire map, keywords, actions, observations, evidence optional</li>
+    <li><strong>Questionnaire</strong> — seeded topics with hints for LLM coverage</li>
+  </ul>
+
+  <h2>3. Pipeline steps</h2>
+  <ol>
+    <li>Upload &amp; validate</li>
+    <li>STT → segments (+ optional LLM speaker labels)</li>
+    <li>Talk-time % from segments</li>
+    <li>Analysis LLM → JSON → validate / retry</li>
+    <li>Aggregate for main dashboard</li>
+  </ol>
+
+  <h2>4. Server API (if using a backend)</h2>
+  <table>
+    <tr><th>Method</th><th>Path</th><th>Role</th></tr>
+    <tr><td>POST</td><td>/api/calls</td><td>Upload</td></tr>
+    <tr><td>POST</td><td>/api/calls/:id/process</td><td>Reprocess</td></tr>
+    <tr><td>GET</td><td>/api/calls</td><td>List</td></tr>
+    <tr><td>GET</td><td>/api/calls/:id</td><td>Detail</td></tr>
+    <tr><td>GET</td><td>/api/calls/:id/audio</td><td>Audio</td></tr>
+    <tr><td>GET</td><td>/api/dashboard/summary</td><td>Dashboard</td></tr>
+  </table>
+
+  <h2>5. Frontend pages</h2>
+  <ul>
+    <li>Calls + upload</li>
+    <li>Main dashboard</li>
+    <li>Call detail (audio sync, all analysis sections)</li>
+  </ul>
+
+  <h2>6. Phases</h2>
+  <p>Scaffold → DB/seed → upload/list → STT → LLM analysis → dashboard API → UI → polish (errors, reprocess, demo data).</p>
+
+  <h2>7. Success criteria</h2>
+  <ul>
+    <li>Upload → <strong>ready</strong></li>
+    <li>Dashboard aggregates with multiple calls</li>
+    <li>Detail: sync transcript, questionnaire, scores, keywords, actions, observations</li>
+  </ul>
+</body>
+</html>
