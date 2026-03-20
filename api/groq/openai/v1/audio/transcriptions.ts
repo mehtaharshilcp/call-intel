@@ -7,7 +7,7 @@ const MAX_AUDIO_BYTES = 15 * 1024 * 1024
 
 /** Node.js avoids Edge incompatibilities with Blob SDK / undici; buffers avoid streaming crashes. */
 export const config = {
-  runtime: 'nodejs' as const,
+  runtime: 'nodejs',
   maxDuration: 300,
 }
 

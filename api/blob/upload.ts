@@ -5,7 +5,7 @@ import type { HandleUploadBody } from '@vercel/blob/client'
 const MAX_AUDIO_BYTES = 15 * 1024 * 1024
 
 export const config = {
-  runtime: 'nodejs' as const,
+  runtime: 'nodejs',
   maxDuration: 180,
 }
 

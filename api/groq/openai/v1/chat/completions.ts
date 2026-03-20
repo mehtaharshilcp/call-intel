@@ -1,7 +1,7 @@
 import { forwardToGroq } from '../../../_forward'
 
 export const config = {
-  runtime: 'nodejs' as const,
+  runtime: 'nodejs',
   maxDuration: 120,
 }
 
